@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="farmersmarket.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="8651"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/><expanded_item id="4" parent="1"/></tab_structure><tab_browse><table title="booth" custom_title="0" dock_id="1" table="4,5:mainbooth"/><dock_state state="000000ff00000000fd00000001000000020000000000000000fc0100000001fb000000160064006f0063006b00420072006f00770073006500310100000000ffffffff0000011700ffffff000000000000000000000004000000040000000800000008fc00000000"/><default_encoding codec=""/><browse_table_settings/></tab_browse><tab_sql><sql name="SQL 1*">select product_name
+		, max(original_price)
+from product p 
+inner join vendor_inventory as vi
+	on p.product_id = vi.product_id
+group by product_name;
+
+select product_name
+		, product_qty_type
+		, min(original_price)
+from product p 
+inner join vendor_inventory as vi
+	on p.product_id = vi.product_id
+group by product_qty_type
+
+select product_name
+		, product_qty_type
+		, min(original_price)
+from product p 
+inner join vendor_inventory as vi
+	on p.product_id = vi.product_id
+group by product_qty_type
+		, product_name
+		
+-- Arithmetic division
+
+select 10.0/3.0 as division
+, cast(10.0 as INT)/cast(3.0 as INT) as integer_division
+, pi()
+, sin(10)
+
+select 
+cost_to_customer_per_qty
+, cost_to_customer_per_qty/2
+, cast(cost_to_customer_per_qty as INT)/2
+from customer_purchases
+
+
+-- HAVING
+SELECT
+market_date
+, customer_id
+, sum(quantity*cost_to_customer_per_qty) as total_cost
+from customer_purchases
+where customer_id between 1 and 5
+group by  market_date
+, customer_id
+having total_cost &gt; 50;
+
+-- how many products were bought
+
+select count(product_id)
+		, product_id
+from customer_purchases
+where product_id&lt;=8
+group by product_id
+having count(product_id) between 300 and 500;
+
+-- top
+
+select count(product_id) as num_of_prod
+		, product_id
+from customer_purchases
+--where product_id&lt;=8
+group by product_id
+--having count(product_id) between 300 and 500;
+order by count(product_id) DESC
+limit 3;
+
+
+-- subquery
+
+-- what is the single item that has been bought in the greatest quantity ?
+
+
+SELECT
+	product_id
+	, count(quantity) as max_qiantity
+from customer_purchases
+group by product_id;
+
+SELECT
+	product_id
+	, max(quantity) as max_qiantity
+from customer_purchases
+group by product_id;
+
+
+-- outer QUERY
+SELECT product_name
+		, max(max_qiantity) 
+		from product p
+inner join (
+    SELECT
+	product_id
+	, count(quantity) as max_qiantity
+     from customer_purchases
+     group by product_id) x 
+	 on p.product_id = x.product_id
+	 
+-- simple subquery in a from statement
+
+select distinct inflation, product_id
+from (
+SELECT
+	product_id
+	, cost_to_customer_per_qty
+	,case when cost_to_customer_per_qty &lt; '1.00'
+	THEN cost_to_customer_per_qty*5
+	ELSE cost_to_customer_per_qty end as inflation
+from customer_purchases);
+
+
+select product_id	
+	  , product_name
+	  , product_size
+	  , product_category_id
+	  , product_qty_type
+from product
+
+-- subqueries: WHERE
+
+-- what postal codes have had at least 3000? at the farmers market?
+select distinct customer_postal_code
+from customer 
+where customer_id in (
+select 
+	customer_id
+	--, sum(quantity*cost_to_customer_per_qty) as total_spend
+from customer_purchases
+group by customer_id
+having sum(quantity*cost_to_customer_per_qty) &gt; 3000);	
+
+-- what is the name of the vendor who sells pie ?
+
+select product_id
+		, product_name
+from product
+where product_name like '%pie%'
+
+SELECT DISTINCT vendor_name
+FROM vendor_inventory vi
+join vendor v
+on vi.vendor_id = v.vendor_id
+where product_id in 
+(select product_id
+		--, product_name
+from product
+where product_name like '%pie%');
+
+
+-- TEMP
+
+-- if a table named exists, delete it, otherwise do NOTHING
+
+drop table if EXISTS
+		new_vendor_inventory;
+		
+--- make the TABLE
+CREATE TEMP TABLE new_vendor_inventory as 
+	select * , original_price*6 as inflation from vendor_inventory
+	
+select * 
+from new_vendor_inventory
+
+CREATE TEMP TABLE new_new_vendor_inventory as 
+	select *, inflation*2 as super_inflation from new_vendor_inventory
+	
+select * from new_new_vendor_inventory;
+
+
+-- CTE
+
+-- calculate sales per vendor per day
+with vendor_daily_sales as (
+
+
+SELECT md.market_date
+		, market_day
+		, market_year
+		, market_week
+		, vendor_name
+		, sum(quantity*cost_to_customer_per_qty) as sales
+FROM customer_purchases cp
+INNER JOIN vendor v
+	on v.vendor_id = cp.vendor_id
+INNER JOIN market_date_info md
+	on cp.market_date = md.market_date
+group by md.market_date, market_day)
+
+SELECT market_year
+		, market_week
+		,vendor_name
+		, sum(sales)
+from vendor_daily_sales
+GROUP BY market_year
+		, market_week
+		,vendor_name;  
+
+		
+with vendor_daily_sales as (
+SELECT md.market_date
+		, market_day
+		, market_year
+		, market_week
+		, vendor_name
+		, sum(quantity*cost_to_customer_per_qty) as sales
+FROM customer_purchases cp
+INNER JOIN vendor v
+	on v.vendor_id = cp.vendor_id
+INNER JOIN market_date_info md
+	on cp.market_date = md.market_date
+group by md.market_date, market_day)
+, a_new_cte as (select * from product)
+SELECT market_year
+		, market_week
+		,vendor_name
+		, sum(sales)
+from vendor_daily_sales
+GROUP BY market_year
+		, market_week
+		,vendor_name
+		
+-- dates 
+
+SELECT
+date('now'), 
+datetime('now'), 
+strftime('%Y-%m', 'now', '+50 days') as the_future,
+market_date,
+strftime('%Y-%m-%d', market_date, '+50 days') as the_past
+
+select date('2024-01-12','start of month', '-1 day')
+
+</sql><current_tab id="0"/></tab_sql></sqlb_project>

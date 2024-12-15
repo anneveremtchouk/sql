@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="farmersmarket.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="8651"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><table title="booth" custom_title="0" dock_id="1" table="4,5:mainbooth"/><dock_state state="000000ff00000000fd00000001000000020000000000000000fc0100000001fb000000160064006f0063006b00420072006f00770073006500310100000000ffffffff0000011700ffffff000000000000000000000004000000040000000800000008fc00000000"/><default_encoding codec=""/><browse_table_settings/></tab_browse><tab_sql><sql name="SQL 1*">select * 
+from customer;</sql><sql name="SQL 2*">select *
+from customer 
+where customer_id = 1;
+
+select *
+from customer 
+where customer_id in (1,2);
+
+select *
+from customer 
+where customer_id = 1
+or customer_id = 2 
+
+select *
+from customer_purchases
+where 1=1
+and customer_id in (3,4,5)
+and vendor_id in (3,4,5);
+
+
+select *
+from product
+where product_name like '%pepper%'
+
+
+select *
+from product 
+where 1=1
+and product_id in (1,2)
+and product_size = 'medium'
+
+select * from customer
+where customer_last_name like '%a%'
+
+select * from product
+where product_size is null
+or product_size='';
+
+-- CASE EXAMPLE
+
+SELECT *
+, CASE 
+	WHEN vendor_type = 'Fresh Focused'
+	THEN 'Wednesday'
+	WHEN vendor_type = 'Prepared Foods'
+	THEN 'Thursday'
+	ELSE 'Saturday'
+	END as day_of_specialty
+, CASE WHEN vendor_name like '%pie%'
+		THEN 'Wednesday'
+	END as only_pie_day
+FROM vendor
+
+-- DISTINCT
+
+--without DISTINCT
+select market_day
+from market_date_info;
+
+select distinct market_day
+from market_date_info;
+
+select market_day
+from market_date_info
+group by market_day
+
+
+SELECT * FROM customer
+
+
+SELECT DISTINCT vendor_id 
+
+----
+SELECT customer_purchases.product_id
+	   , product.product_id
+	   , product_name
+from customer_purchases
+INNER JOIN product
+	On customer_purchases.product_id =
+	product.product_id
+	
+-- LEFT JOIN 
+
+-- there are products that have been bought
+-- ad something that has not been bought
+
+SELECT
+p.product_id
+, product_name
+, cp.cost_to_customer_per_qty
+from product as p
+inner join customer_purchases as cp
+on p.product_id = cp.product_id
+where p.product_id = 1
+
+select p.product_id
+, p.product_name
+, ( select cp.cost_to_customer_per_qty from
+customer_purchases cp where p.product_id = cp.product_id)
+as cost_to_customer_per_qty
+from product as p
+where p.product_id = 1
+
+select DISTINCT
+	--vendor_id
+	--, product_id
+	--, customer_id
+	vendor_name
+	, product_name
+	, customer_first_name
+	, customer_last_name
+From customer_purchases cp
+inner join customer c
+on c.customer_id = cp.customer_id
+inner join vendor v
+on v.vendor_id = cp.vendor_id
+inner join product p
+on p.product_id = cp.product_id
+inner join market_date_info md
+on md.market_date = cp.market_date
+</sql><current_tab id="1"/></tab_sql></sqlb_project>
