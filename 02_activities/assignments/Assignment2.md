@@ -131,6 +131,7 @@ where x.visit_number = 1
 3. Using a COUNT() window function, include a value along with each row of the customer_purchases table that indicates how many different times that customer has purchased that product_id.
 
 <div align="center">-</div>
+
 ```
 -- I am sorry I am missing something here: It is not clear for me whether this task related to the previous tasks... 
 
