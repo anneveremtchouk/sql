@@ -92,9 +92,11 @@ Find the NULLs and then using COALESCE, replace the NULL with a blank for the fi
 
 <div align="center">-</div>
 
+```
 SELECT 
 product_name || ', ' || coalesce(product_size,'') || ' (' || coalesce(product_qty_type,'unit') || ')' as summary
 FROM product
+```
 
 #### Windowed Functions
 1. Write a query that selects from the customer_purchases table and numbers each customer’s visits to the farmer’s market (labeling each market date with a different number). Each customer’s first visit is labeled 1, second visit is labeled 2, etc. 
@@ -103,14 +105,17 @@ You can either display all rows in the customer_purchases table, with the counte
 
 **HINT**: One of these approaches uses ROW_NUMBER() and one uses DENSE_RANK().
 
+```
 select distinct customer_id
 		, market_date
 		, dense_rank() OVER (PARTITION BY customer_id ORDER BY market_date) as visit_number
 from customer_purchases
 order by customer_id
+```
 
 2. Reverse the numbering of the query from a part so each customer’s most recent visit is labeled 1, then write another query that uses this one as a subquery (or temp table) and filters the results to only the customer’s most recent visit.
 
+```
 select x.customer_id
 	, x.market_date as most_recent_visit
 from(
@@ -121,10 +126,12 @@ from customer_purchases
 order by customer_id
 ) x
 where x.visit_number = 1 
+```
 
 3. Using a COUNT() window function, include a value along with each row of the customer_purchases table that indicates how many different times that customer has purchased that product_id.
 
 <div align="center">-</div>
+```
 -- I am sorry I am missing something here: It is not clear for me whether this task related to the previous tasks... 
 
 -- If no, we can proceed like this 
@@ -193,6 +200,7 @@ order by customer_id
 ) x on cp.customer_id = x.customer_id
 and x.visit_number = 1
 group by cp.customer_id
+```
 
 
 #### String manipulations
@@ -206,15 +214,18 @@ group by cp.customer_id
 
 <div align="center">-</div>
 
+```
 select *
 	, CASE WHEN INSTR(product_name,'-') = 0 THEN NULL 
 	ELSE trim((SUBSTR(product_name, INSTR(product_name,'-')+1, length(product_name) - INSTR(product_name,'-')))) 
 	END 
 	as product_description
 from product
+```
 
 /* 2. Filter the query to show any product_size value that contain a number with REGEXP. */
 
+```
 select *
 	, CASE WHEN INSTR(product_name,'-') = 0 THEN NULL 
 	ELSE trim((SUBSTR(product_name, INSTR(product_name,'-')+1, length(product_name) - INSTR(product_name,'-')))) 
@@ -231,28 +242,35 @@ select *
 	as product_description
 from product
 where product_size regexp '\d'
+```
 
 #### UNION
 1. Using a UNION, write a query that displays the market dates with the highest and lowest total sales.
 
 **HINT**: There are a possibly a few ways to do this query, but if you're struggling, try the following: 1) Create a CTE/Temp Table to find sales values grouped dates; 2) Create another CTE/Temp table with a rank windowed function on the previous query to create "best day" and "worst day"; 3) Query the second temp table twice, once for the best day, once for the worst day, with a UNION binding them. 
 -- 1) Create a CTE/Temp Table to find sales values grouped dates:
+
+```
 CREATE TEMP TABLE IF NOT EXISTS temp.sales_total AS 
 select 
 	market_date
 	, sum(cost_to_customer_per_qty*quantity) as total_sales
 from customer_purchases
 group by market_date;
+```
 
 -- 2) Create another CTE/Temp table with a rank windowed function on the previous query to create  "best day" and "worst day"
 
+```
 SELECT *
 		, rank() OVER (ORDER BY total_sales DESC) rank_desc
 		, rank() OVER (ORDER BY total_sales ASC) rank_asc
 FROM temp.sales_total
+```
 
 -- 3) Query the second temp table twice, once for the best day, once for the worst day,  with a UNION binding them.
 
+```
 -- solution 1:
 select market_date
 		, total_sales
@@ -282,6 +300,7 @@ SELECT *
 FROM temp.sales_total) x
 where x.rank = 1
 ***
+```
 
 ## Section 3:
 You can start this section following *session 5*.
@@ -300,6 +319,7 @@ Steps to complete this part of the assignment:
 **HINT**: Be sure you select only relevant columns and rows. Remember, CROSS JOIN will explode your table rows, so CROSS JOIN should likely be a subquery. Think a bit about the row counts: how many distinct vendors, product names are there (x)? How many customers are there (y). Before your final group by you should have the product of those two queries (x\*y). 
 
 <div align="center">-</div>
+```
 select v.vendor_name
 	, p.product_name
 	, sum(price_per_5_units) as sales_total_5_units
@@ -316,10 +336,12 @@ inner join product p on x.product_id = p.product_id
 inner join vendor v on x.vendor_id = v.vendor_id
 group by v.vendor_name
 	, p.product_name;
+```
 
 #### INSERT
 1. Create a new table "product_units". This table will contain only products where the `product_qty_type = 'unit'`. It should use all of the columns from the product table, as well as a new column for the `CURRENT_TIMESTAMP`.  Name the timestamp column `snapshot_timestamp`.
 
+```
 CREATE TEMP TABLE IF NOT EXISTS temp.product_units AS 
 select * 	
 	, strftime('%Y/%m/%d %H:%M:%S','now') as snapshot_timestamp
@@ -327,12 +349,15 @@ from product
 where product_qty_type = 'unit';
 select * 
 from temp.product_units
+```
 
 2. Using `INSERT`, add a new row to the product_unit table (with an updated timestamp). This can be any product you desire (e.g. add another record for Apple Pie). 
 
 <div align="center">-</div>
+```
 INSERT into temp.product_units
 VALUES (7,'Apple Pie', '10"',3, 'unit', strftime('%Y/%m/%d %H:%M:%S','now'));
+```
 
 #### DELETE 
 1. Delete the older record for the whatever product you added.
@@ -341,10 +366,12 @@ VALUES (7,'Apple Pie', '10"',3, 'unit', strftime('%Y/%m/%d %H:%M:%S','now'));
 
 <div align="center">-</div>
 
+```
 delete from temp.product_units
 where 1=1
 and product_name = 'Apple Pie'
 and snapshot_timestamp = '2024/12/22 21:05:23';
+```
 
 #### UPDATE
 1. We want to add the current_quantity to the product_units table. First, add a new column, `current_quantity` to the table using the following syntax.
@@ -357,6 +384,7 @@ Then, using `UPDATE`, change the current_quantity equal to the **last** `quantit
 
 **HINT**: This one is pretty hard. First, determine how to get the "last" quantity per product. Second, coalesce null values to 0 (if you don't have null values, figure out how to rearrange your query so you do.) Third, `SET current_quantity = (...your select statement...)`, remembering that WHERE can only accommodate one column. Finally, make sure you have a WHERE statement to update the right row, you'll need to use `product_units.product_id` to refer to the correct row within the product_units table. When you have all of these components, you can run the update statement.
 
+```
 ALTER TABLE product_units
 ADD current_quantity INT; 
 
@@ -381,3 +409,4 @@ set current_quantity = (select current_qty from product_info_qty where product_u
 	 
 select * 
 from product_units
+```
