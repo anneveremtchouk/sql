@@ -371,7 +371,8 @@ VALUES (7,'Apple Pie', '10"',3, 'unit', strftime('%Y/%m/%d %H:%M:%S','now'));
 delete from temp.product_units
 where 1=1
 and product_name = 'Apple Pie'
-and snapshot_timestamp = '2024/12/22 21:05:23';
+and snapshot_timestamp = (select min(snapshot_timestamp)
+							from temp.product_units );
 ```
 
 #### UPDATE

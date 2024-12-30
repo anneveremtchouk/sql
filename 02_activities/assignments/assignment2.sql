@@ -278,7 +278,8 @@ HINT: If you don't specify a WHERE clause, you are going to have a bad time.*/
 delete from temp.product_units
 where 1=1
 and product_name = 'Apple Pie'
-and snapshot_timestamp = '2024/12/22 21:05:23';
+and snapshot_timestamp = (select min(snapshot_timestamp)
+							from temp.product_units )
 
 select * 
 from temp.product_units
